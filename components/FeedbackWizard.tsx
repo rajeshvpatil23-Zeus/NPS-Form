@@ -1,0 +1,505 @@
+"use client";
+
+import * as React from "react";
+import { useRouter } from "next/navigation";
+import { AnimatePresence, motion } from "framer-motion";
+import { ArrowLeft, ArrowRight, Loader2 } from "lucide-react";
+
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { ProgressBar } from "@/components/ProgressBar";
+import { toast } from "@/components/ui/use-toast";
+import { NpsStep } from "@/components/steps/NpsStep";
+import {
+  GridRatingStep,
+  GRID_ROWS,
+  type GridRating
+} from "@/components/steps/GridRatingStep";
+import {
+  CheckboxStep,
+  type ChallengesValue
+} from "@/components/steps/CheckboxStep";
+import { LongTextStep } from "@/components/steps/LongTextStep";
+import { getMonthYearLabel } from "@/lib/month";
+
+function getPath(score: number) {
+  if (score >= 9) return "happy";
+  if (score >= 7) return "neutral";
+  return "critical";
+}
+
+function normalizeEmail(value: string) {
+  return value.trim().toLowerCase();
+}
+
+type StudentPayload = {
+  found: boolean;
+  already_submitted: boolean;
+  cycle: string;
+  name: string;
+  batch_name: string;
+  student_code: string;
+  phone_number: string;
+  email: string;
+};
+
+type StepDef = {
+  key: "nps" | "grid" | "challenges" | "happy_text" | "improve" | "more";
+  section?: string;
+  question: string;
+  subtext?: string;
+};
+
+export function FeedbackWizard({
+  email,
+  demoMode = false,
+  initialStudent = null
+}: {
+  email: string;
+  demoMode?: boolean;
+  initialStudent?: StudentPayload | null;
+}) {
+  const router = useRouter();
+  const [loadingStudent, setLoadingStudent] = React.useState(!initialStudent);
+  const [student, setStudent] = React.useState<StudentPayload | null>(initialStudent);
+
+  React.useEffect(() => {
+    let mounted = true;
+    if (!email) {
+      router.replace("/?message=Please%20enter%20your%20registered%20email.");
+      return;
+    }
+
+    const normalizedEmail = email.trim().toLowerCase();
+    if (
+      initialStudent &&
+      normalizeEmail(initialStudent.email) === normalizeEmail(normalizedEmail)
+    ) {
+      setLoadingStudent(false);
+      return;
+    }
+
+    (async () => {
+      setLoadingStudent(true);
+      try {
+        if (demoMode) {
+          const safeEmail = email.trim().toLowerCase();
+          if (!safeEmail) {
+            router.replace("/?demo=1&message=Please%20enter%20an%20email.");
+            return;
+          }
+          if (mounted) {
+            setStudent({
+              found: true,
+              already_submitted: false,
+              cycle: getMonthYearLabel(),
+              name: "Demo Student",
+              batch_name: "Demo Batch",
+              student_code: "DEMO001",
+              phone_number: "NA",
+              email: safeEmail
+            });
+          }
+          return;
+        }
+
+        const res = await fetch(`/api/student?email=${encodeURIComponent(normalizedEmail)}`);
+        const data = await res.json();
+        if (!res.ok || !data.found) {
+          router.replace(
+            "/?message=This%20email%20is%20not%20registered.%20Please%20use%20your%20registered%20email%20ID."
+          );
+          return;
+        }
+        if (data.already_submitted) {
+          router.replace(
+            `/?message=${encodeURIComponent(`You have already submitted feedback for ${data.cycle}. Thank you!`)}`
+          );
+          return;
+        }
+        if (mounted) setStudent(data);
+      } catch {
+        router.replace("/?message=Unable%20to%20load%20student%20details.");
+      } finally {
+        if (mounted) setLoadingStudent(false);
+      }
+    })();
+
+    return () => {
+      mounted = false;
+    };
+  }, [demoMode, email, initialStudent, router]);
+
+  const [direction, setDirection] = React.useState<1 | -1>(1);
+  const [index, setIndex] = React.useState(0);
+  const touchStartX = React.useRef<number | null>(null);
+
+  const [npsScore, setNpsScore] = React.useState<number | null>(null);
+  const [grid, setGrid] = React.useState<Partial<GridRating>>({});
+  const [challenges, setChallenges] = React.useState<ChallengesValue>({
+    selected: [],
+    otherText: ""
+  });
+  const [textHappy, setTextHappy] = React.useState("");
+  const [textImprove, setTextImprove] = React.useState("");
+  const [textMore, setTextMore] = React.useState("");
+
+  const steps: StepDef[] = React.useMemo(() => {
+    const base: StepDef[] = [
+      {
+        key: "nps",
+        question:
+          "How likely are you to recommend BITSoM CEPD x Masai School Programs to your friends or family?"
+      }
+    ];
+
+    if (npsScore === null) return base;
+
+    const path = getPath(npsScore);
+
+    base.push({
+      key: "grid",
+      section: "Rate Your Experience Across Key Areas ✨",
+      question: "Rate the Following Components of Your Experience 😊",
+      subtext: "5 = Extremely Happy 😍 || 1 = Unhappy 😕"
+    });
+
+    if (path === "happy") {
+      base.push({
+        key: "happy_text",
+        section: "Share Your Experience",
+        question:
+          "What did you like most about your experience with BITSoM CEPD x Masai School, and what is one thing we could improve further?"
+      });
+    } else if (path === "neutral") {
+      base.push({
+        key: "challenges",
+        section: "Help Us Understand Your Challenges",
+        question: "Please select the areas where you faced challenges"
+      });
+      base.push({
+        key: "improve",
+        section: "Help Us Improve",
+        question: "What is one thing we could improve to make your experience a 10/10?"
+      });
+    } else {
+      base.push({
+        key: "challenges",
+        section: "Identifying Gaps in Your Experience",
+        question: "Please select the areas where you faced challenges"
+      });
+      base.push({
+        key: "more",
+        section: "Tell Us More",
+        question:
+          "What challenges did you face during your experience, and what could we have done differently?"
+      });
+    }
+
+    return base;
+  }, [npsScore]);
+
+  React.useEffect(() => {
+    if (index > steps.length - 1) setIndex(steps.length - 1);
+  }, [steps.length, index]);
+
+  const current = steps[index]!;
+
+  function gridComplete() {
+    return GRID_ROWS.every((r) => typeof grid[r] === "number");
+  }
+
+  function challengesComplete() {
+    if (challenges.selected.length < 1) return false;
+    if (challenges.selected.includes("Other")) {
+      return (challenges.otherText ?? "").trim().length >= 2;
+    }
+    return true;
+  }
+
+  function minCharsComplete(val: string, min?: number) {
+    if (!min) return val.trim().length > 0;
+    return val.trim().length >= min;
+  }
+
+  function stepAnswered(stepKey: string) {
+    switch (stepKey) {
+      case "nps":
+        return npsScore !== null;
+      case "grid":
+        return gridComplete();
+      case "challenges":
+        return challengesComplete();
+      case "happy_text":
+        return minCharsComplete(textHappy, 20);
+      case "improve":
+        return minCharsComplete(textImprove);
+      case "more":
+        return minCharsComplete(textMore);
+      default:
+        return false;
+    }
+  }
+
+  const answeredCount = steps.filter((s) => stepAnswered(s.key)).length;
+  const progress = Math.round((answeredCount / steps.length) * 100);
+
+  const canGoBack = index > 0;
+  const isLast = index === steps.length - 1;
+  const canNext = stepAnswered(current.key);
+
+  const [submitting, setSubmitting] = React.useState(false);
+
+  const goNext = React.useCallback(() => {
+    if (!canNext || isLast || submitting) return;
+    setDirection(1);
+    setIndex((i) => Math.min(steps.length - 1, i + 1));
+  }, [canNext, isLast, submitting, steps.length]);
+
+  const goBack = React.useCallback(() => {
+    if (!canGoBack || submitting) return;
+    setDirection(-1);
+    setIndex((i) => Math.max(0, i - 1));
+  }, [canGoBack, submitting]);
+
+  function handleKeyDown(e: React.KeyboardEvent<HTMLDivElement>) {
+    if (e.key === "Escape") {
+      e.preventDefault();
+      goBack();
+      return;
+    }
+    if (e.key === "Enter") {
+      const tag = (e.target as HTMLElement).tagName.toLowerCase();
+      if (tag === "textarea") return;
+      e.preventDefault();
+      if (isLast) submit();
+      else goNext();
+    }
+  }
+
+  async function submit() {
+    if (!student) return;
+    if (!npsScore) return;
+    if (!gridComplete()) return;
+
+    setSubmitting(true);
+    const savingToast = toast({
+      title: "Saving…",
+      description: "Submitting your feedback securely."
+    });
+
+    try {
+      const path = getPath(npsScore);
+      const challengesSelected =
+        path === "happy"
+          ? []
+          : challenges.selected.includes("Other") && challenges.otherText?.trim()
+            ? [...challenges.selected.filter((s) => s !== "Other"), `Other: ${challenges.otherText.trim()}`]
+            : challenges.selected;
+      const openText =
+        path === "happy" ? textHappy.trim() : path === "neutral" ? textImprove.trim() : textMore.trim();
+      const res = await fetch("/api/submit-feedback", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          demo: demoMode,
+          email: student.email,
+          nps_score: npsScore,
+          grid_ratings: {
+            faculty: grid["Faculty/Mentor Sessions"],
+            ta: grid["Teaching Assistant Support"],
+            coordinator: grid["Program Coordinator Support"],
+            lms: grid["LMS Platform"],
+            ticketing: grid["Ticketing Support"]
+          },
+          challenges: challengesSelected,
+          open_text: openText
+        })
+      });
+      const data = (await res.json()) as
+        | { success: boolean; name: string; cycle: string }
+        | { error: string };
+      if (!res.ok) {
+        throw new Error("error" in data ? data.error : "Submission failed.");
+      }
+
+      savingToast.dismiss?.();
+      router.replace(
+        `/success?name=${encodeURIComponent(data.name)}&month=${encodeURIComponent(data.cycle)}`
+      );
+    } catch (err) {
+      savingToast.dismiss?.();
+      toast({
+        variant: "destructive",
+        title: "Could not submit",
+        description: err instanceof Error ? err.message : "Please try again."
+      });
+      setSubmitting(false);
+    }
+  }
+
+  if (loadingStudent) {
+    return (
+      <div className="mx-auto flex min-h-[60dvh] w-full max-w-2xl items-center justify-center">
+        <Loader2 className="h-6 w-6 animate-spin text-green-600" />
+      </div>
+    );
+  }
+
+  if (!student) return null;
+
+  const cycle = student.cycle || getMonthYearLabel();
+
+  return (
+    <div
+      className="mx-auto w-full max-w-2xl space-y-5"
+      onKeyDown={handleKeyDown}
+      tabIndex={0}
+      onTouchStart={(e) => {
+        touchStartX.current = e.changedTouches[0]?.clientX ?? null;
+      }}
+      onTouchEnd={(e) => {
+        if (touchStartX.current === null) return;
+        const endX = e.changedTouches[0]?.clientX ?? touchStartX.current;
+        const diff = endX - touchStartX.current;
+        touchStartX.current = null;
+        if (Math.abs(diff) < 50) return;
+        if (diff < 0) goNext();
+        else goBack();
+      }}
+    >
+      <div className="flex flex-col gap-1">
+        <div className="text-sm font-semibold text-green-700">
+          {student.batch_name} Monthly Feedback - {cycle}
+        </div>
+        <div className="text-lg font-semibold">Hi {student.name}</div>
+        <div className="inline-flex w-fit rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">
+          Student Code: {student.student_code}
+        </div>
+      </div>
+
+      <ProgressBar value={progress} />
+
+      <Card>
+        <CardHeader className="space-y-2">
+          {current.section ? (
+            <div className="text-sm font-medium text-slate-700">
+              {current.section}
+            </div>
+          ) : null}
+          <div className="text-base font-semibold">{current.question}</div>
+          {current.subtext ? (
+            <div className="text-sm text-slate-600">{current.subtext}</div>
+          ) : null}
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <AnimatePresence mode="wait" initial={false} custom={direction}>
+            <motion.div
+              key={current.key}
+              custom={direction}
+              initial={{ opacity: 0, x: direction === 1 ? 40 : -40 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: direction === 1 ? -40 : 40 }}
+              transition={{ duration: 0.22 }}
+              className="space-y-4"
+            >
+              {current.key === "nps" ? (
+                <NpsStep
+                  value={npsScore}
+                  onChange={(v) => {
+                    setNpsScore(v);
+                  }}
+                />
+              ) : null}
+
+              {current.key === "grid" ? (
+                <GridRatingStep value={grid} onChange={setGrid} />
+              ) : null}
+
+              {current.key === "challenges" ? (
+                <CheckboxStep value={challenges} onChange={setChallenges} />
+              ) : null}
+
+              {current.key === "happy_text" ? (
+                <LongTextStep
+                  value={textHappy}
+                  onChange={setTextHappy}
+                  placeholder="Please share your experience…"
+                />
+              ) : null}
+
+              {current.key === "improve" ? (
+                <LongTextStep
+                  value={textImprove}
+                  onChange={setTextImprove}
+                  placeholder="One improvement that would make it 10/10…"
+                />
+              ) : null}
+
+              {current.key === "more" ? (
+                <LongTextStep
+                  value={textMore}
+                  onChange={setTextMore}
+                  placeholder="Tell us what happened and what we could do differently…"
+                />
+              ) : null}
+            </motion.div>
+          </AnimatePresence>
+
+          <div
+            className="flex items-center justify-between gap-3 pb-[max(12px,env(safe-area-inset-bottom))]"
+            style={{ paddingBottom: "max(12px, env(safe-area-inset-bottom))" }}
+          >
+            <Button
+              type="button"
+              variant="outline"
+              onClick={goBack}
+              disabled={!canGoBack || submitting}
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Back
+            </Button>
+
+            {isLast ? (
+              <motion.div
+                animate={
+                  canNext && !submitting
+                    ? { scale: [1, 1.02, 1] }
+                    : { scale: 1 }
+                }
+                transition={{ duration: 1.2, repeat: Infinity }}
+                className="flex-1"
+              >
+                <Button
+                  type="button"
+                  className="w-full"
+                  onClick={submit}
+                  disabled={!canNext || submitting}
+                >
+                  {submitting ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Submitting…
+                    </>
+                  ) : (
+                    "Submit"
+                  )}
+                </Button>
+              </motion.div>
+            ) : (
+              <Button
+                type="button"
+                onClick={goNext}
+                disabled={!canNext || submitting}
+              >
+                Next
+                <ArrowRight className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
