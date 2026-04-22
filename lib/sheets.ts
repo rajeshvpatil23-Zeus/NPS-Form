@@ -210,6 +210,70 @@ function invalidateTabCache(tabName: string) {
   headerCache.delete(tabName);
 }
 
+function isTabCacheFresh(tabName: string) {
+  const now = Date.now();
+  const headers = headerCache.get(tabName);
+  const rows = rowsCache.get(tabName);
+  return Boolean(headers && rows && headers.expiresAt > now && rows.expiresAt > now);
+}
+
+function toHeaderMap(headers: string[]): HeaderMap {
+  const indexByHeader: Record<string, number> = {};
+  for (let i = 0; i < headers.length; i += 1) {
+    indexByHeader[headers[i].toLowerCase()] = i;
+  }
+  return { headers, indexByHeader };
+}
+
+function cacheTabData(tabName: string, headers: string[], rows: string[][]) {
+  const expiresAt = Date.now() + CACHE_TTL_MS;
+  const headerMap = toHeaderMap(headers);
+  headerCache.set(tabName, { ...headerMap, expiresAt });
+  rowsCache.set(tabName, { rows, expiresAt });
+}
+
+async function warmVerifyCachesFromBatchGet() {
+  const sheets = getSheetsClient();
+  const res = await sheets.spreadsheets.values.batchGet({
+    spreadsheetId: spreadsheetId(),
+    ranges: [
+      `${STUDENTS_TAB}!1:1`,
+      `${STUDENTS_TAB}!A2:Z`,
+      `${SUBMITTED_TAB}!1:1`,
+      `${SUBMITTED_TAB}!A2:Z`
+    ]
+  });
+
+  const ranges = res.data.valueRanges ?? [];
+  const studentsHeaders = (ranges[0]?.values?.[0] ?? []).map((v) =>
+    String(v ?? "").trim()
+  );
+  const studentsRows = (ranges[1]?.values ?? []).map((row) =>
+    (row ?? []).map((cell) => String(cell ?? ""))
+  );
+  const submittedHeaders = (ranges[2]?.values?.[0] ?? []).map((v) =>
+    String(v ?? "").trim()
+  );
+  const submittedRows = (ranges[3]?.values ?? []).map((row) =>
+    (row ?? []).map((cell) => String(cell ?? ""))
+  );
+
+  if (studentsHeaders.length > 0) {
+    cacheTabData(STUDENTS_TAB, studentsHeaders, studentsRows);
+  }
+
+  // Submitted tab can be missing for a fresh sheet; treat as empty.
+  if (submittedHeaders.length > 0) {
+    cacheTabData(SUBMITTED_TAB, submittedHeaders, submittedRows);
+  } else {
+    rowsCache.set(SUBMITTED_TAB, {
+      rows: [],
+      expiresAt: Date.now() + CACHE_TTL_MS
+    });
+    headerCache.delete(SUBMITTED_TAB);
+  }
+}
+
 export async function getStudentByEmail(email: string) {
   const targetEmail = normalizeEmail(email);
   if (!targetEmail) return null;
@@ -333,9 +397,32 @@ export async function appendSubmitted(email: string, batchName: string, cycle: s
 
 export async function verifyStudentSubmissionState(email: string): Promise<VerifyResult> {
   const cycle = getCurrentCycle();
-  const student = await getStudentByEmail(email);
+  const targetEmail = normalizeEmail(email);
+  if (!targetEmail) return { found: false, already_submitted: false, cycle };
+
+  // Fast path: one API call can warm both Students + Submitted caches.
+  if (!isTabCacheFresh(STUDENTS_TAB) || !isTabCacheFresh(SUBMITTED_TAB)) {
+    await warmVerifyCachesFromBatchGet();
+  }
+
+  const student = await getStudentByEmail(targetEmail);
   if (!student) return { found: false, already_submitted: false, cycle };
-  const already_submitted = await hasSubmitted(student.email, cycle);
+
+  // Avoid ensure/create here to keep verify path fast; missing Submitted means no prior submissions.
+  const submittedHeader = headerCache.get(SUBMITTED_TAB);
+  const submittedRows = rowsCache.get(SUBMITTED_TAB)?.rows ?? [];
+  const emailIdx = submittedHeader?.indexByHeader.email;
+  const cycleIdx = submittedHeader?.indexByHeader.cycle;
+
+  let already_submitted = false;
+  if (emailIdx !== undefined && cycleIdx !== undefined) {
+    already_submitted = submittedRows.some(
+      (row) =>
+        normalizeEmail(String(row[emailIdx] ?? "")) === student.email &&
+        String(row[cycleIdx] ?? "").trim() === cycle
+    );
+  }
+
   return { found: true, already_submitted, cycle, student };
 }
 
