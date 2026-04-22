@@ -7,19 +7,19 @@ import { ArrowLeft, ArrowRight, Loader2 } from "lucide-react";
 
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ProgressBar } from "@/components/ProgressBar";
+import { ProgressBar } from "@/components/feedback/ProgressBar";
 import { toast } from "@/components/ui/use-toast";
-import { NpsStep } from "@/components/steps/NpsStep";
+import { NpsStep } from "@/components/feedback/steps/NpsStep";
 import {
   GridRatingStep,
   GRID_ROWS,
   type GridRating
-} from "@/components/steps/GridRatingStep";
+} from "@/components/feedback/steps/GridRatingStep";
 import {
   CheckboxStep,
   type ChallengesValue
-} from "@/components/steps/CheckboxStep";
-import { LongTextStep } from "@/components/steps/LongTextStep";
+} from "@/components/feedback/steps/CheckboxStep";
+import { LongTextStep } from "@/components/feedback/steps/LongTextStep";
 import { getMonthYearLabel } from "@/lib/month";
 
 function getPath(score: number) {

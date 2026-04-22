@@ -1,4 +1,4 @@
-import { FeedbackWizard } from "@/components/FeedbackWizard";
+import { FeedbackWizard } from "@/components/feedback/FeedbackWizard";
 
 export default function FeedbackPage({
   searchParams

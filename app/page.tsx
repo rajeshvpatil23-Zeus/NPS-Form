@@ -1,4 +1,4 @@
-import { EmailGate } from "@/components/EmailGate";
+import { EmailGate } from "@/components/feedback/EmailGate";
 
 export default function Page({
   searchParams

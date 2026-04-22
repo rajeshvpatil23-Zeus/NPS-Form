@@ -1,4 +1,4 @@
-import { SuccessScreen } from "@/components/SuccessScreen";
+import { SuccessScreen } from "@/components/feedback/SuccessScreen";
 
 export default function SuccessPage({
   searchParams
