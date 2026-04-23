@@ -27,7 +27,7 @@ export function NpsStep({
       <div className="rounded-xl border border-blue-100 bg-gradient-to-r from-blue-50 to-indigo-50 px-3 py-2 text-sm font-medium text-slate-700">
         10 = Extremely likely · 0 = Not at all
       </div>
-      <div className="grid grid-cols-6 gap-2 sm:grid-cols-11">
+      <div className="flex gap-2 overflow-x-auto pb-1 sm:justify-between sm:overflow-visible">
         {SCALE.map((score) => {
           const selected = value === score;
           return (
@@ -39,7 +39,7 @@ export function NpsStep({
               transition={{ duration: 0.25 }}
               onClick={() => onChange(score)}
               className={cn(
-                "flex h-11 w-11 items-center justify-center rounded-full border-2 text-center text-base font-semibold shadow-sm transition-all",
+                "flex h-11 w-11 shrink-0 items-center justify-center rounded-full border-2 text-center text-base font-semibold shadow-sm transition-all",
                 getScoreTone(score),
                 selected
                   ? "bg-current/10 ring-2 ring-offset-1 ring-slate-300"
