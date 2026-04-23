@@ -36,11 +36,13 @@ export function EmailGate({
     message ?? null
   );
   const [isError, setIsError] = React.useState(false);
+  const [viewResponseEmail, setViewResponseEmail] = React.useState<string | null>(null);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setInlineMessage(null);
     setIsError(false);
+    setViewResponseEmail(null);
     setLoading(true);
     try {
       if (demoMode) {
@@ -67,9 +69,11 @@ export function EmailGate({
       }
 
       if (data.already_submitted) {
+        const safeEmail = (data.email ?? email).trim().toLowerCase();
         setInlineMessage(
           `You have already submitted feedback for ${data.cycle}. Thank you!`
         );
+        setViewResponseEmail(safeEmail);
         return;
       }
 
@@ -112,6 +116,20 @@ export function EmailGate({
             >
               {inlineMessage}
             </div>
+          ) : null}
+          {viewResponseEmail ? (
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full"
+              onClick={() =>
+                router.push(
+                  `/my-response?email=${encodeURIComponent(viewResponseEmail)}`
+                )
+              }
+            >
+              View your submitted response
+            </Button>
           ) : null}
 
           <form onSubmit={onSubmit} className="space-y-4">

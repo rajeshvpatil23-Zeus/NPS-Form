@@ -17,6 +17,24 @@ type VerifyResult =
       student: StudentRow;
     };
 
+export type ResponseView = {
+  submitted_at: string;
+  email: string;
+  student_code: string;
+  name: string;
+  batch_name: string;
+  phone_number: string;
+  nps_score: number;
+  faculty_rating: number;
+  ta_rating: number;
+  coordinator_rating: number;
+  lms_rating: number;
+  ticketing_rating: number;
+  challenges_selected: string;
+  open_text_answer: string;
+  cycle: string;
+};
+
 const STUDENTS_TAB = "Students";
 const SUBMITTED_TAB = "Submitted";
 const SHEETS_SCOPE = "https://www.googleapis.com/auth/spreadsheets";
@@ -99,6 +117,12 @@ function getSheetsClient() {
 
 function normalizeEmail(email: string) {
   return email.trim().toLowerCase();
+}
+
+function cycleFromDateString(value: string) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  return getCycleLabel(date);
 }
 
 type HeaderMap = {
@@ -424,5 +448,74 @@ export async function verifyStudentSubmissionState(email: string): Promise<Verif
   }
 
   return { found: true, already_submitted, cycle, student };
+}
+
+export async function getCurrentCycleResponseByEmail(email: string) {
+  const cycle = getCurrentCycle();
+  const student = await getStudentByEmail(email);
+  if (!student) return null;
+
+  await ensureTabWithHeader(SUBMITTED_TAB, SUBMITTED_HEADERS);
+
+  const submittedHeader = await getHeaderMap(SUBMITTED_TAB);
+  const submittedRows = await getRows(SUBMITTED_TAB);
+  const emailIdx = submittedHeader.indexByHeader.email;
+  const cycleIdx = submittedHeader.indexByHeader.cycle;
+  const batchIdx = submittedHeader.indexByHeader.batch_name;
+
+  if (emailIdx === undefined || cycleIdx === undefined || batchIdx === undefined) {
+    return null;
+  }
+
+  const submittedForCycle = submittedRows
+    .filter(
+      (row) =>
+        normalizeEmail(String(row[emailIdx] ?? "")) === student.email &&
+        String(row[cycleIdx] ?? "").trim() === cycle
+    )
+    .at(-1);
+
+  if (!submittedForCycle) return null;
+
+  const batchName = String(submittedForCycle[batchIdx] ?? "").trim();
+  if (!batchName) return null;
+
+  const responseTab = getBatchTabName(batchName, cycle);
+  await ensureTabWithHeader(responseTab, RESPONSE_HEADER);
+  const responseHeader = await getHeaderMap(responseTab);
+  const responseRows = await getRows(responseTab);
+  const responseEmailIdx = responseHeader.indexByHeader.email;
+  const responseSubmittedAtIdx = responseHeader.indexByHeader.submitted_at;
+
+  if (responseEmailIdx === undefined || responseSubmittedAtIdx === undefined) {
+    return null;
+  }
+
+  const matched = responseRows
+    .filter((row) => normalizeEmail(String(row[responseEmailIdx] ?? "")) === student.email)
+    .filter((row) => cycleFromDateString(String(row[responseSubmittedAtIdx] ?? "")) === cycle)
+    .at(-1);
+
+  if (!matched) return null;
+
+  const readNumber = (header: string) => Number(getCell(matched, responseHeader.indexByHeader, header) || 0);
+
+  return {
+    submitted_at: getCell(matched, responseHeader.indexByHeader, "submitted_at"),
+    email: getCell(matched, responseHeader.indexByHeader, "email"),
+    student_code: getCell(matched, responseHeader.indexByHeader, "student_code"),
+    name: getCell(matched, responseHeader.indexByHeader, "name"),
+    batch_name: getCell(matched, responseHeader.indexByHeader, "batch_name"),
+    phone_number: getCell(matched, responseHeader.indexByHeader, "phone_number"),
+    nps_score: readNumber("nps_score"),
+    faculty_rating: readNumber("faculty_rating"),
+    ta_rating: readNumber("ta_rating"),
+    coordinator_rating: readNumber("coordinator_rating"),
+    lms_rating: readNumber("lms_rating"),
+    ticketing_rating: readNumber("ticketing_rating"),
+    challenges_selected: getCell(matched, responseHeader.indexByHeader, "challenges_selected"),
+    open_text_answer: getCell(matched, responseHeader.indexByHeader, "open_text_answer"),
+    cycle
+  } satisfies ResponseView;
 }
 
