@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { GraduationCap, Loader2, Sparkles } from "lucide-react";
 
 import { getMonthlyFeedbackTitle } from "@/lib/month";
@@ -100,6 +101,15 @@ export function EmailGate({
     <div className="relative z-10 mx-auto flex w-full max-w-md flex-col items-center justify-center gap-6">
       <Card className="w-full border-slate-200/80 bg-white/90 backdrop-blur">
         <CardHeader className="space-y-2 text-center">
+          <div className="mx-auto">
+            <Image
+              src="/masai-logo.svg"
+              alt="Masai"
+              width={120}
+              height={36}
+              priority
+            />
+          </div>
           <div className="mx-auto inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
             <GraduationCap className="h-3.5 w-3.5" />
             Monthly Student Pulse

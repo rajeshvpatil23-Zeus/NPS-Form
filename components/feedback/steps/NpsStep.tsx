@@ -41,7 +41,7 @@ export function NpsStep({
                 "flex min-h-14 w-full flex-col items-center justify-center rounded-2xl border px-2 py-2 text-center text-sm font-semibold shadow-sm transition-all",
                 selected
                   ? "border-green-600 bg-gradient-to-b from-green-50 to-emerald-50 text-green-700 ring-2 ring-green-200"
-                  : "border-slate-200 bg-white text-slate-900 hover:bg-slate-50"
+                  : "border-slate-200 bg-white text-slate-900 hover:border-rose-200 hover:bg-rose-50"
               )}
             >
               <span className="text-base leading-none">{getMood(score)}</span>

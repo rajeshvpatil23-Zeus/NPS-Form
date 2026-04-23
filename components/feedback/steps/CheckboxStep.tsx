@@ -52,7 +52,7 @@ export function CheckboxStep({
                 "min-h-12 rounded-full border px-4 py-2 text-sm transition-colors",
                 active
                   ? "border-green-600 bg-green-50 text-green-700"
-                  : "border-slate-200 bg-white text-slate-800 hover:bg-slate-50"
+                  : "border-slate-200 bg-white text-slate-800 hover:border-rose-200 hover:bg-rose-50 hover:text-rose-700"
               )}
             >
               {opt}

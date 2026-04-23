@@ -65,7 +65,7 @@ export function GridRatingStep({
                         "flex min-h-12 w-full flex-col items-center justify-center rounded-xl border text-xs font-semibold transition-all",
                         isSelected
                           ? "border-green-600 bg-gradient-to-b from-green-50 to-emerald-50 text-green-700 ring-2 ring-green-200"
-                          : "border-slate-200 bg-white hover:bg-slate-50"
+                          : "border-slate-200 bg-white hover:border-rose-200 hover:bg-rose-50"
                       )}
                       aria-label={`${row} rating ${c.value}`}
                     >
@@ -112,7 +112,7 @@ export function GridRatingStep({
                         "mx-auto flex h-12 w-12 items-center justify-center rounded-xl border text-sm transition-colors",
                         isSelected
                           ? "border-green-600 bg-green-50 text-green-700"
-                          : "border-slate-200 bg-white hover:bg-slate-50"
+                          : "border-slate-200 bg-white hover:border-rose-200 hover:bg-rose-50"
                       )}
                       aria-label={`${row} rating ${c.value}`}
                     >

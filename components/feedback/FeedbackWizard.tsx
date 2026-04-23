@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowLeft, ArrowRight, Loader2, Sparkles } from "lucide-react";
 
@@ -369,6 +370,9 @@ export function FeedbackWizard({
       }}
     >
       <div className="flex flex-col gap-1">
+        <div className="w-fit">
+          <Image src="/masai-logo.svg" alt="Masai" width={110} height={33} />
+        </div>
         <div className="inline-flex w-fit items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
           <Sparkles className="h-3.5 w-3.5" />
           Monthly Learner Feedback
