@@ -61,6 +61,11 @@ export function FeedbackWizard({
   initialStudent?: StudentPayload | null;
 }) {
   const router = useRouter();
+  const idempotencyKeyRef = React.useRef(
+    typeof crypto !== "undefined" && "randomUUID" in crypto
+      ? crypto.randomUUID()
+      : `${Date.now()}-${Math.random().toString(36).slice(2)}`
+  );
   const [loadingStudent, setLoadingStudent] = React.useState(!initialStudent);
   const [student, setStudent] = React.useState<StudentPayload | null>(initialStudent);
 
@@ -304,6 +309,7 @@ export function FeedbackWizard({
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
           demo: demoMode,
+          idempotency_key: idempotencyKeyRef.current,
           email: student.email,
           nps_score: npsScore,
           grid_ratings: {

@@ -6,6 +6,7 @@ import {
   appendSubmitted,
   getCurrentCycle,
   getStudentByEmail,
+  hasIdempotencyKey,
   hasSubmitted
 } from "@/lib/sheets";
 
@@ -21,6 +22,7 @@ const bodySchema = z.object({
   demo: z.boolean().optional().default(false),
   email: z.string().email(),
   nps_score: z.number().int().min(0).max(10),
+  idempotency_key: z.string().min(8).max(128),
   grid_ratings: ratingsSchema,
   challenges: z.array(z.string()).default([]),
   open_text: z.string().default("")
@@ -43,6 +45,13 @@ export async function POST(req: Request) {
       return NextResponse.json(
         { error: "This email is not registered." },
         { status: 404 }
+      );
+    }
+
+    if (await hasIdempotencyKey(body.idempotency_key)) {
+      return NextResponse.json(
+        { success: true, name: student.name, cycle },
+        { status: 200 }
       );
     }
 
@@ -70,7 +79,12 @@ export async function POST(req: Request) {
       open_text_answer: body.open_text
     });
 
-    await appendSubmitted(student.email, student.batch_name, cycle);
+    await appendSubmitted(
+      student.email,
+      student.batch_name,
+      cycle,
+      body.idempotency_key
+    );
 
     return NextResponse.json(
       { success: true, name: student.name, cycle },

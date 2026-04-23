@@ -38,7 +38,13 @@ export type ResponseView = {
 const STUDENTS_TAB = "Students";
 const SUBMITTED_TAB = "Submitted";
 const SHEETS_SCOPE = "https://www.googleapis.com/auth/spreadsheets";
-const SUBMITTED_HEADERS = ["email", "batch_name", "cycle", "submitted_at"];
+const SUBMITTED_HEADERS = [
+  "email",
+  "batch_name",
+  "cycle",
+  "submitted_at",
+  "idempotency_key"
+];
 const CACHE_TTL_MS = 20_000;
 const RESPONSE_HEADER = [
   "submitted_at",
@@ -119,6 +125,46 @@ function normalizeEmail(email: string) {
   return email.trim().toLowerCase();
 }
 
+function sleep(ms: number) {
+  return new Promise<void>((resolve) => {
+    setTimeout(resolve, ms);
+  });
+}
+
+function isRetriableError(error: unknown) {
+  if (!(error instanceof Error)) return false;
+  const status = (error as Error & { code?: number | string }).code;
+  const message = error.message.toLowerCase();
+  if (typeof status === "number" && [408, 429, 500, 502, 503, 504].includes(status)) {
+    return true;
+  }
+  return (
+    message.includes("rate limit") ||
+    message.includes("quota") ||
+    message.includes("timeout") ||
+    message.includes("econnreset") ||
+    message.includes("socket hang up") ||
+    message.includes("internal error")
+  );
+}
+
+async function withRetry<T>(task: () => Promise<T>, attempts = 4): Promise<T> {
+  let lastError: unknown;
+  for (let attempt = 1; attempt <= attempts; attempt += 1) {
+    try {
+      return await task();
+    } catch (error) {
+      lastError = error;
+      if (attempt >= attempts || !isRetriableError(error)) {
+        throw error;
+      }
+      const backoffMs = 150 * 2 ** (attempt - 1) + Math.floor(Math.random() * 120);
+      await sleep(backoffMs);
+    }
+  }
+  throw lastError;
+}
+
 function cycleFromDateString(value: string) {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "";
@@ -133,42 +179,52 @@ type HeaderMap = {
 async function ensureTabWithHeader(tabName: string, requiredHeaders: string[]) {
   const sheets = getSheetsClient();
   const ssId = spreadsheetId();
-  const meta = await sheets.spreadsheets.get({ spreadsheetId: ssId });
+  const meta = await withRetry(() =>
+    sheets.spreadsheets.get({ spreadsheetId: ssId })
+  );
   const existing = meta.data.sheets?.find((s) => s.properties?.title === tabName);
 
   if (!existing) {
-    await sheets.spreadsheets.batchUpdate({
-      spreadsheetId: ssId,
-      requestBody: {
-        requests: [{ addSheet: { properties: { title: tabName } } }]
-      }
-    });
-    await sheets.spreadsheets.values.update({
-      spreadsheetId: ssId,
-      range: `${tabName}!A1`,
-      valueInputOption: "RAW",
-      requestBody: { values: [requiredHeaders] }
-    });
+    await withRetry(() =>
+      sheets.spreadsheets.batchUpdate({
+        spreadsheetId: ssId,
+        requestBody: {
+          requests: [{ addSheet: { properties: { title: tabName } } }]
+        }
+      })
+    );
+    await withRetry(() =>
+      sheets.spreadsheets.values.update({
+        spreadsheetId: ssId,
+        range: `${tabName}!A1`,
+        valueInputOption: "RAW",
+        requestBody: { values: [requiredHeaders] }
+      })
+    );
     invalidateTabCache(tabName);
     return;
   }
 
-  const first = await sheets.spreadsheets.values.get({
-    spreadsheetId: ssId,
-    range: `${tabName}!1:1`
-  });
+  const first = await withRetry(() =>
+    sheets.spreadsheets.values.get({
+      spreadsheetId: ssId,
+      range: `${tabName}!1:1`
+    })
+  );
   const current = (first.data.values?.[0] ?? []).map((v) => String(v).trim());
   const headerOk =
     current.length >= requiredHeaders.length &&
     requiredHeaders.every((h, i) => current[i] === h);
 
   if (!headerOk) {
-    await sheets.spreadsheets.values.update({
-      spreadsheetId: ssId,
-      range: `${tabName}!A1`,
-      valueInputOption: "RAW",
-      requestBody: { values: [requiredHeaders] }
-    });
+    await withRetry(() =>
+      sheets.spreadsheets.values.update({
+        spreadsheetId: ssId,
+        range: `${tabName}!A1`,
+        valueInputOption: "RAW",
+        requestBody: { values: [requiredHeaders] }
+      })
+    );
     invalidateTabCache(tabName);
   }
 }
@@ -180,10 +236,12 @@ async function getHeaderMap(tabName: string): Promise<HeaderMap> {
   }
 
   const sheets = getSheetsClient();
-  const res = await sheets.spreadsheets.values.get({
-    spreadsheetId: spreadsheetId(),
-    range: `${tabName}!1:1`
-  });
+  const res = await withRetry(() =>
+    sheets.spreadsheets.values.get({
+      spreadsheetId: spreadsheetId(),
+      range: `${tabName}!1:1`
+    })
+  );
 
   const headerRow = (res.data.values?.[0] ?? []).map((value) =>
     String(value).trim()
@@ -217,10 +275,12 @@ async function getRows(tabName: string) {
   if (cached && cached.expiresAt > Date.now()) return cached.rows;
 
   const sheets = getSheetsClient();
-  const res = await sheets.spreadsheets.values.get({
-    spreadsheetId: spreadsheetId(),
-    range: `${tabName}!A2:Z`
-  });
+  const res = await withRetry(() =>
+    sheets.spreadsheets.values.get({
+      spreadsheetId: spreadsheetId(),
+      range: `${tabName}!A2:Z`
+    })
+  );
   const rows = (res.data.values ?? []).map((row) =>
     (row ?? []).map((cell) => String(cell ?? ""))
   );
@@ -258,15 +318,17 @@ function cacheTabData(tabName: string, headers: string[], rows: string[][]) {
 
 async function warmVerifyCachesFromBatchGet() {
   const sheets = getSheetsClient();
-  const res = await sheets.spreadsheets.values.batchGet({
-    spreadsheetId: spreadsheetId(),
-    ranges: [
-      `${STUDENTS_TAB}!1:1`,
-      `${STUDENTS_TAB}!A2:Z`,
-      `${SUBMITTED_TAB}!1:1`,
-      `${SUBMITTED_TAB}!A2:Z`
-    ]
-  });
+  const res = await withRetry(() =>
+    sheets.spreadsheets.values.batchGet({
+      spreadsheetId: spreadsheetId(),
+      ranges: [
+        `${STUDENTS_TAB}!1:1`,
+        `${STUDENTS_TAB}!A2:Z`,
+        `${SUBMITTED_TAB}!1:1`,
+        `${SUBMITTED_TAB}!A2:Z`
+      ]
+    })
+  );
 
   const ranges = res.data.valueRanges ?? [];
   const studentsHeaders = (ranges[0]?.values?.[0] ?? []).map((v) =>
@@ -384,18 +446,25 @@ export async function appendResponse(
     return value === undefined ? "" : String(value);
   });
 
-  await sheets.spreadsheets.values.append({
-    spreadsheetId: spreadsheetId(),
-    range: `${tab}!A:Z`,
-    valueInputOption: "USER_ENTERED",
-    requestBody: {
-      values: [row]
-    }
-  });
+  await withRetry(() =>
+    sheets.spreadsheets.values.append({
+      spreadsheetId: spreadsheetId(),
+      range: `${tab}!A:Z`,
+      valueInputOption: "USER_ENTERED",
+      requestBody: {
+        values: [row]
+      }
+    })
+  );
   invalidateTabCache(tab);
 }
 
-export async function appendSubmitted(email: string, batchName: string, cycle: string) {
+export async function appendSubmitted(
+  email: string,
+  batchName: string,
+  cycle: string,
+  idempotencyKey?: string
+) {
   await ensureTabWithHeader(SUBMITTED_TAB, SUBMITTED_HEADERS);
   submittedTabEnsured = true;
   const sheets = getSheetsClient();
@@ -404,19 +473,33 @@ export async function appendSubmitted(email: string, batchName: string, cycle: s
     submitted_at: new Date().toISOString(),
     email: normalizeEmail(email),
     batch_name: batchName,
-    cycle
+    cycle,
+    idempotency_key: (idempotencyKey ?? "").trim()
   };
   const row = headers.map((header) => payload[header.toLowerCase()] ?? "");
 
-  await sheets.spreadsheets.values.append({
-    spreadsheetId: spreadsheetId(),
-    range: `${SUBMITTED_TAB}!A:Z`,
-    valueInputOption: "USER_ENTERED",
-    requestBody: {
-      values: [row]
-    }
-  });
+  await withRetry(() =>
+    sheets.spreadsheets.values.append({
+      spreadsheetId: spreadsheetId(),
+      range: `${SUBMITTED_TAB}!A:Z`,
+      valueInputOption: "USER_ENTERED",
+      requestBody: {
+        values: [row]
+      }
+    })
+  );
   invalidateTabCache(SUBMITTED_TAB);
+}
+
+export async function hasIdempotencyKey(idempotencyKey: string) {
+  const key = idempotencyKey.trim();
+  if (!key) return false;
+  await ensureTabWithHeader(SUBMITTED_TAB, SUBMITTED_HEADERS);
+  const { indexByHeader } = await getHeaderMap(SUBMITTED_TAB);
+  const keyIdx = indexByHeader.idempotency_key;
+  if (keyIdx === undefined) return false;
+  const rows = await getRows(SUBMITTED_TAB);
+  return rows.some((row) => String(row[keyIdx] ?? "").trim() === key);
 }
 
 export async function verifyStudentSubmissionState(email: string): Promise<VerifyResult> {
