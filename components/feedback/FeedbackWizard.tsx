@@ -234,9 +234,9 @@ export function FeedbackWizard({
       case "happy_text":
         return minCharsComplete(textHappy, 20);
       case "improve":
-        return minCharsComplete(textImprove, 15);
+        return true;
       case "more":
-        return minCharsComplete(textMore, 15);
+        return true;
       default:
         return false;
     }
