@@ -232,7 +232,7 @@ export function FeedbackWizard({
       case "challenges":
         return challengesComplete();
       case "happy_text":
-        return minCharsComplete(textHappy, 20);
+        return true;
       case "improve":
         return true;
       case "more":
