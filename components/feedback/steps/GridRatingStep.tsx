@@ -19,9 +19,9 @@ function getToneClass(value: number) {
 }
 
 function getSelectedBg(value: number) {
-  if (value === 5) return "bg-emerald-50";
-  if (value === 4 || value === 3) return "bg-orange-50";
-  return "bg-rose-50";
+  if (value === 5) return "bg-emerald-100 border-emerald-600 text-emerald-800";
+  if (value === 4 || value === 3) return "bg-orange-100 border-orange-500 text-orange-800";
+  return "bg-rose-100 border-rose-400 text-rose-800";
 }
 
 const ROWS = [
@@ -69,7 +69,7 @@ export function GridRatingStep({
                         "flex min-h-12 w-full flex-col items-center justify-center rounded-xl border text-xs font-semibold transition-all",
                         getToneClass(c.value),
                         isSelected
-                          ? `${getSelectedBg(c.value)} ring-2 ring-slate-200`
+                          ? `${getSelectedBg(c.value)} ring-2 ring-slate-300 shadow-sm`
                           : "bg-white/80 hover:bg-white"
                       )}
                       aria-label={`${row} rating ${c.value}`}
@@ -116,7 +116,7 @@ export function GridRatingStep({
                         "mx-auto flex h-12 w-12 items-center justify-center rounded-xl border text-sm transition-colors",
                         getToneClass(c.value),
                         isSelected
-                          ? getSelectedBg(c.value)
+                          ? `${getSelectedBg(c.value)} shadow-sm`
                           : "bg-white/80 hover:bg-white"
                       )}
                       aria-label={`${row} rating ${c.value}`}
