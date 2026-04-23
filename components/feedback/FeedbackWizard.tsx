@@ -317,10 +317,10 @@ export function FeedbackWizard({
         })
       });
       const data = (await res.json()) as
-        | { success: boolean; name: string; cycle: string }
-        | { error: string };
-      if (!res.ok) {
-        throw new Error("error" in data ? data.error : "Submission failed.");
+        | { success: true; name: string; cycle: string }
+        | { success?: false; error?: string };
+      if (!res.ok || !data.success) {
+        throw new Error(("error" in data ? data.error : undefined) ?? "Submission failed.");
       }
 
       savingToast.dismiss?.();
