@@ -31,7 +31,7 @@ export default function FeedbackPage({
       : null;
 
   return (
-    <main className="relative min-h-dvh overflow-hidden px-4 py-8">
+    <main className="relative min-h-dvh overflow-hidden px-3 py-6 sm:px-4 sm:py-8">
       <div className="pointer-events-none absolute -left-20 top-0 h-72 w-72 rounded-full bg-blue-200/20 blur-3xl" />
       <div className="pointer-events-none absolute -right-16 top-20 h-72 w-72 rounded-full bg-emerald-200/20 blur-3xl" />
       <FeedbackWizard

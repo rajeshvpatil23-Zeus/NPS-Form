@@ -353,7 +353,7 @@ export function FeedbackWizard({
 
   return (
     <div
-      className="relative z-10 mx-auto w-full max-w-2xl space-y-5"
+      className="relative z-10 mx-auto w-full max-w-2xl space-y-4 rounded-2xl outline-none focus:outline-none focus-visible:outline-none sm:space-y-5"
       onKeyDown={handleKeyDown}
       tabIndex={0}
       onTouchStart={(e) => {
@@ -389,7 +389,7 @@ export function FeedbackWizard({
       <ProgressBar value={progress} />
 
       <Card className="border-slate-200/80 bg-white/90">
-        <CardHeader className="space-y-2">
+        <CardHeader className="space-y-2 p-4 pb-3 sm:p-6 sm:pb-3">
           {current.section ? (
             <div className="text-sm font-medium text-slate-700">
               {current.section}
@@ -400,7 +400,7 @@ export function FeedbackWizard({
             <div className="text-sm text-slate-600">{current.subtext}</div>
           ) : null}
         </CardHeader>
-        <CardContent className="space-y-6">
+        <CardContent className="space-y-5 p-4 pt-3 sm:space-y-6 sm:p-6 sm:pt-3">
           <AnimatePresence mode="wait" initial={false} custom={direction}>
             <motion.div
               key={current.key}
