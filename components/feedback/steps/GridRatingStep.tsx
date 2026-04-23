@@ -39,7 +39,7 @@ export function GridRatingStep({
 }) {
   return (
     <div className="space-y-3">
-      <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700">
+      <div className="rounded-xl border border-blue-100 bg-gradient-to-r from-blue-50 to-cyan-50 px-3 py-2 text-sm font-medium text-slate-700">
         Rate each area with one tap <span className="ml-1">⭐</span> (5 = Extremely
         Happy, 1 = Unhappy)
       </div>

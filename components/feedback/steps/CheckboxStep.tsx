@@ -37,6 +37,9 @@ export function CheckboxStep({
 
   return (
     <div className="space-y-4">
+      <div className="rounded-xl border border-blue-100 bg-gradient-to-r from-blue-50 to-indigo-50 px-3 py-2 text-sm font-medium text-slate-700">
+        Select all challenge areas you faced during the month.
+      </div>
       <div className="flex flex-wrap gap-2">
         {OPTIONS.map((opt) => {
           const active = value.selected.includes(opt);

@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
-import { Loader2 } from "lucide-react";
+import { GraduationCap, Loader2, Sparkles } from "lucide-react";
 
 import { getMonthlyFeedbackTitle } from "@/lib/month";
 import { Button } from "@/components/ui/button";
@@ -97,10 +97,14 @@ export function EmailGate({
   const title = getMonthlyFeedbackTitle();
 
   return (
-    <div className="mx-auto flex w-full max-w-md flex-col items-center justify-center gap-6">
-      <Card className="w-full">
+    <div className="relative z-10 mx-auto flex w-full max-w-md flex-col items-center justify-center gap-6">
+      <Card className="w-full border-slate-200/80 bg-white/90 backdrop-blur">
         <CardHeader className="space-y-2 text-center">
-          <div className="text-2xl font-semibold">{title}</div>
+          <div className="mx-auto inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
+            <GraduationCap className="h-3.5 w-3.5" />
+            Monthly Student Pulse
+          </div>
+          <div className="text-2xl font-bold tracking-tight">{title}</div>
           <div className="text-sm text-slate-600">
             Your feedback gives us direction and helps improve your experience.
           </div>
@@ -128,6 +132,7 @@ export function EmailGate({
                 )
               }
             >
+              <Sparkles className="h-4 w-4" />
               View your submitted response
             </Button>
           ) : null}
@@ -149,7 +154,7 @@ export function EmailGate({
 
             <Button
               type="submit"
-              className="w-full"
+              className="w-full font-semibold"
               disabled={loading || email.trim().length === 0}
             >
               {loading ? (
@@ -168,7 +173,7 @@ export function EmailGate({
       <div className="text-center text-xs text-slate-500">
         {demoMode
           ? "Demo mode enabled: verification is skipped."
-          : "Protected by a secure monthly verification link."}
+          : "Secure monthly verification for registered learners."}
       </div>
     </div>
   );

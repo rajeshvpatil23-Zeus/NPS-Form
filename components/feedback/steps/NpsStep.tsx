@@ -22,7 +22,7 @@ export function NpsStep({
 }) {
   return (
     <div className="space-y-4">
-      <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700">
+      <div className="rounded-xl border border-blue-100 bg-gradient-to-r from-blue-50 to-indigo-50 px-3 py-2 text-sm font-medium text-slate-700">
         How do you feel about your experience? <span className="ml-1">😊</span>{" "}
         Tap a score (10 = Extremely Happy, 1 = Unhappy)
       </div>

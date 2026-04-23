@@ -13,10 +13,14 @@ export function LongTextStep({
 }) {
   return (
     <div className="space-y-2">
+      <div className="text-xs font-medium uppercase tracking-wide text-slate-500">
+        Your detailed feedback
+      </div>
       <Textarea
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
+        className="min-h-32"
       />
     </div>
   );

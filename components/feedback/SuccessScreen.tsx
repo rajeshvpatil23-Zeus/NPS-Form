@@ -23,8 +23,8 @@ export function SuccessScreen({ name, month }: { name: string; month: string }) 
   }, []);
 
   return (
-    <div className="mx-auto flex w-full max-w-md flex-col items-center justify-center gap-6">
-      <Card className="w-full">
+    <div className="relative z-10 mx-auto flex w-full max-w-md flex-col items-center justify-center gap-6">
+      <Card className="w-full border-slate-200/80 bg-white/90">
         <CardHeader className="text-center space-y-3">
           <motion.div
             initial={{ scale: 0.7, opacity: 0 }}
@@ -42,7 +42,7 @@ export function SuccessScreen({ name, month }: { name: string; month: string }) 
             </motion.div>
           </motion.div>
 
-          <div className="text-2xl font-semibold">
+          <div className="text-2xl font-bold tracking-tight">
             Thank you, {name}!
           </div>
           <div className="text-sm text-slate-600">
