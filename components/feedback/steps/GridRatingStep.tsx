@@ -12,12 +12,16 @@ const COLUMNS: Array<{ value: number; label: string }> = [
   { value: 1, label: "1" }
 ];
 
-function getEmoji(value: number) {
-  if (value === 5) return "😍";
-  if (value === 4) return "😊";
-  if (value === 3) return "🙂";
-  if (value === 2) return "😐";
-  return "😕";
+function getToneClass(value: number) {
+  if (value === 5) return "border-emerald-500 text-emerald-700";
+  if (value === 4 || value === 3) return "border-orange-400 text-orange-700";
+  return "border-rose-300 text-rose-700";
+}
+
+function getSelectedBg(value: number) {
+  if (value === 5) return "bg-emerald-50";
+  if (value === 4 || value === 3) return "bg-orange-50";
+  return "bg-rose-50";
 }
 
 const ROWS = [
@@ -63,13 +67,13 @@ export function GridRatingStep({
                       onClick={() => onChange({ ...value, [row]: c.value })}
                       className={cn(
                         "flex min-h-12 w-full flex-col items-center justify-center rounded-xl border text-xs font-semibold transition-all",
+                        getToneClass(c.value),
                         isSelected
-                          ? "border-green-600 bg-gradient-to-b from-green-50 to-emerald-50 text-green-700 ring-2 ring-green-200"
-                          : "border-slate-200 bg-white hover:border-rose-200 hover:bg-rose-50"
+                          ? `${getSelectedBg(c.value)} ring-2 ring-slate-200`
+                          : "bg-white/80 hover:bg-white"
                       )}
                       aria-label={`${row} rating ${c.value}`}
                     >
-                      <span className="text-sm leading-none">{getEmoji(c.value)}</span>
                       {c.label}
                     </button>
                   );
@@ -110,9 +114,10 @@ export function GridRatingStep({
                       onClick={() => onChange({ ...value, [row]: c.value })}
                       className={cn(
                         "mx-auto flex h-12 w-12 items-center justify-center rounded-xl border text-sm transition-colors",
+                        getToneClass(c.value),
                         isSelected
-                          ? "border-green-600 bg-green-50 text-green-700"
-                          : "border-slate-200 bg-white hover:border-rose-200 hover:bg-rose-50"
+                          ? getSelectedBg(c.value)
+                          : "bg-white/80 hover:bg-white"
                       )}
                       aria-label={`${row} rating ${c.value}`}
                     >

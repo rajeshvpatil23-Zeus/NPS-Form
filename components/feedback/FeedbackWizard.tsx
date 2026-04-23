@@ -234,9 +234,9 @@ export function FeedbackWizard({
       case "happy_text":
         return minCharsComplete(textHappy, 20);
       case "improve":
-        return minCharsComplete(textImprove);
+        return minCharsComplete(textImprove, 15);
       case "more":
-        return minCharsComplete(textMore);
+        return minCharsComplete(textMore, 15);
       default:
         return false;
     }
@@ -280,7 +280,7 @@ export function FeedbackWizard({
 
   async function submit() {
     if (!student) return;
-    if (!npsScore) return;
+    if (npsScore === null) return;
     if (!gridComplete()) return;
 
     setSubmitting(true);

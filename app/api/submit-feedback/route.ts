@@ -20,7 +20,7 @@ const ratingsSchema = z.object({
 const bodySchema = z.object({
   demo: z.boolean().optional().default(false),
   email: z.string().email(),
-  nps_score: z.number().int().min(1).max(10),
+  nps_score: z.number().int().min(0).max(10),
   grid_ratings: ratingsSchema,
   challenges: z.array(z.string()).default([]),
   open_text: z.string().default("")

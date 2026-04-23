@@ -5,12 +5,14 @@ import { motion } from "framer-motion";
 
 import { cn } from "@/lib/utils";
 
-const SCALE = [10, 9, 8, 7, 6, 5, 4, 3, 2, 1];
+const SCALE = [10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0];
 
-function getMood(score: number) {
-  if (score >= 9) return "😍";
-  if (score >= 7) return "🙂";
-  return "😕";
+function getScoreTone(score: number) {
+  if (score >= 9) return "border-emerald-500 text-emerald-700";
+  if (score >= 7) return "border-lime-500 text-lime-700";
+  if (score >= 5) return "border-amber-500 text-amber-700";
+  if (score >= 3) return "border-orange-500 text-orange-700";
+  return "border-rose-500 text-rose-700";
 }
 
 export function NpsStep({
@@ -23,10 +25,9 @@ export function NpsStep({
   return (
     <div className="space-y-4">
       <div className="rounded-xl border border-blue-100 bg-gradient-to-r from-blue-50 to-indigo-50 px-3 py-2 text-sm font-medium text-slate-700">
-        How do you feel about your experience? <span className="ml-1">😊</span>{" "}
-        Tap a score (10 = Extremely Happy, 1 = Unhappy)
+        10 = Extremely likely · 0 = Not at all
       </div>
-      <div className="grid grid-cols-5 gap-2">
+      <div className="grid grid-cols-6 gap-2 sm:grid-cols-11">
         {SCALE.map((score) => {
           const selected = value === score;
           return (
@@ -38,17 +39,21 @@ export function NpsStep({
               transition={{ duration: 0.25 }}
               onClick={() => onChange(score)}
               className={cn(
-                "flex min-h-14 w-full flex-col items-center justify-center rounded-2xl border px-2 py-2 text-center text-sm font-semibold shadow-sm transition-all",
+                "flex h-11 w-11 items-center justify-center rounded-full border-2 text-center text-base font-semibold shadow-sm transition-all",
+                getScoreTone(score),
                 selected
-                  ? "border-green-600 bg-gradient-to-b from-green-50 to-emerald-50 text-green-700 ring-2 ring-green-200"
-                  : "border-slate-200 bg-white text-slate-900 hover:border-rose-200 hover:bg-rose-50"
+                  ? "bg-current/10 ring-2 ring-offset-1 ring-slate-300"
+                  : "bg-white hover:bg-slate-50"
               )}
             >
-              <span className="text-base leading-none">{getMood(score)}</span>
               <span>{score}</span>
             </motion.button>
           );
         })}
+      </div>
+      <div className="flex justify-between px-1 text-xs font-medium text-slate-500">
+        <span>Extremely likely</span>
+        <span>Not likely</span>
       </div>
     </div>
   );
