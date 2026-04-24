@@ -37,6 +37,7 @@ export type ResponseView = {
 
 const STUDENTS_TAB = "Students";
 const SUBMITTED_TAB = "Submitted";
+const ALL_RESPONSES_TAB = "All Responces";
 const SHEETS_SCOPE = "https://www.googleapis.com/auth/spreadsheets";
 const SUBMITTED_HEADERS = [
   "email",
@@ -74,11 +75,6 @@ function getCycleLabel(date = new Date()) {
 
 export function getCurrentCycle() {
   return getCycleLabel();
-}
-
-function getBatchTabName(batchName: string, cycle: string) {
-  void cycle;
-  return `${batchName} - Response`;
 }
 
 function spreadsheetId() {
@@ -434,7 +430,9 @@ export async function appendResponse(
     open_text_answer: string;
   }
 ) {
-  const tab = getBatchTabName(batchName, cycle);
+  void batchName;
+  void cycle;
+  const tab = ALL_RESPONSES_TAB;
   await ensureTabWithHeader(tab, RESPONSE_HEADER);
   const sheets = getSheetsClient();
   const { headers } = await getHeaderMap(tab);
@@ -544,9 +542,8 @@ export async function getCurrentCycleResponseByEmail(email: string) {
   const submittedRows = await getRows(SUBMITTED_TAB);
   const emailIdx = submittedHeader.indexByHeader.email;
   const cycleIdx = submittedHeader.indexByHeader.cycle;
-  const batchIdx = submittedHeader.indexByHeader.batch_name;
 
-  if (emailIdx === undefined || cycleIdx === undefined || batchIdx === undefined) {
+  if (emailIdx === undefined || cycleIdx === undefined) {
     return null;
   }
 
@@ -560,10 +557,7 @@ export async function getCurrentCycleResponseByEmail(email: string) {
 
   if (!submittedForCycle) return null;
 
-  const batchName = String(submittedForCycle[batchIdx] ?? "").trim();
-  if (!batchName) return null;
-
-  const responseTab = getBatchTabName(batchName, cycle);
+  const responseTab = ALL_RESPONSES_TAB;
   await ensureTabWithHeader(responseTab, RESPONSE_HEADER);
   const responseHeader = await getHeaderMap(responseTab);
   const responseRows = await getRows(responseTab);
