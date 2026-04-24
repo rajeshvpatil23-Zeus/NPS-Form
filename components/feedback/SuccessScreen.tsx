@@ -7,8 +7,17 @@ import { Check } from "lucide-react";
 
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 
-export function SuccessScreen({ name, month }: { name: string; month: string }) {
+export function SuccessScreen({
+  name,
+  month,
+  showConfetti
+}: {
+  name: string;
+  month: string;
+  showConfetti: boolean;
+}) {
   React.useEffect(() => {
+    if (!showConfetti) return;
     const end = Date.now() + 900;
     const tick = () => {
       confetti({
@@ -20,7 +29,7 @@ export function SuccessScreen({ name, month }: { name: string; month: string }) 
       if (Date.now() < end) requestAnimationFrame(tick);
     };
     tick();
-  }, []);
+  }, [showConfetti]);
 
   return (
     <div className="relative z-10 mx-auto flex w-full max-w-md flex-col items-center justify-center gap-6">

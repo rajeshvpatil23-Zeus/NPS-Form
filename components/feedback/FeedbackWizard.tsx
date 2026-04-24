@@ -331,7 +331,7 @@ export function FeedbackWizard({
 
       savingToast.dismiss?.();
       router.replace(
-        `/success?name=${encodeURIComponent(data.name)}&month=${encodeURIComponent(data.cycle)}`
+        `/success?name=${encodeURIComponent(data.name)}&month=${encodeURIComponent(data.cycle)}&nps=${encodeURIComponent(String(npsScore))}`
       );
     } catch (err) {
       savingToast.dismiss?.();
