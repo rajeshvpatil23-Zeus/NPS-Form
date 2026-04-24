@@ -121,6 +121,14 @@ function normalizeEmail(email: string) {
   return email.trim().toLowerCase();
 }
 
+function normalizeGeneric(value: string) {
+  return value.trim().toLowerCase();
+}
+
+function normalizePhone(value: string) {
+  return value.replace(/\D/g, "");
+}
+
 function sleep(ms: number) {
   return new Promise<void>((resolve) => {
     setTimeout(resolve, ms);
@@ -384,6 +392,46 @@ export async function getStudentByEmail(email: string) {
   return null;
 }
 
+export async function getStudentByIdentifier(identifier: string) {
+  const raw = identifier.trim();
+  if (!raw) return null;
+  const normalized = normalizeGeneric(raw);
+  const normalizedPhone = normalizePhone(raw);
+
+  const { indexByHeader } = await getHeaderMap(STUDENTS_TAB);
+  const emailIdx = indexByHeader.email;
+  const codeIdx = indexByHeader.student_code;
+  const phoneIdx = indexByHeader.phone_number;
+
+  if (emailIdx === undefined) {
+    throw new Error(`Tab "${STUDENTS_TAB}" must contain "email" header`);
+  }
+
+  const rows = await getRows(STUDENTS_TAB);
+  for (const row of rows) {
+    const rowEmail = normalizeEmail(String(row[emailIdx] ?? ""));
+    const rowCode = codeIdx === undefined ? "" : normalizeGeneric(String(row[codeIdx] ?? ""));
+    const rowPhone =
+      phoneIdx === undefined ? "" : normalizePhone(String(row[phoneIdx] ?? ""));
+
+    if (
+      rowEmail === normalized ||
+      (rowCode !== "" && rowCode === normalized) ||
+      (normalizedPhone !== "" && rowPhone !== "" && rowPhone === normalizedPhone)
+    ) {
+      return {
+        email: normalizeEmail(getCell(row, indexByHeader, "email")),
+        student_code: getCell(row, indexByHeader, "student_code"),
+        batch_name: getCell(row, indexByHeader, "batch_name"),
+        phone_number: getCell(row, indexByHeader, "phone_number"),
+        name: getCell(row, indexByHeader, "name")
+      } satisfies StudentRow;
+    }
+  }
+
+  return null;
+}
+
 export async function hasSubmitted(email: string, cycle: string) {
   const targetEmail = normalizeEmail(email);
   if (!targetEmail || !cycle) return false;
@@ -500,17 +548,18 @@ export async function hasIdempotencyKey(idempotencyKey: string) {
   return rows.some((row) => String(row[keyIdx] ?? "").trim() === key);
 }
 
-export async function verifyStudentSubmissionState(email: string): Promise<VerifyResult> {
+export async function verifyStudentSubmissionState(
+  identifier: string
+): Promise<VerifyResult> {
   const cycle = getCurrentCycle();
-  const targetEmail = normalizeEmail(email);
-  if (!targetEmail) return { found: false, already_submitted: false, cycle };
+  if (!identifier.trim()) return { found: false, already_submitted: false, cycle };
 
   // Fast path: one API call can warm both Students + Submitted caches.
   if (!isTabCacheFresh(STUDENTS_TAB) || !isTabCacheFresh(SUBMITTED_TAB)) {
     await warmVerifyCachesFromBatchGet();
   }
 
-  const student = await getStudentByEmail(targetEmail);
+  const student = await getStudentByIdentifier(identifier);
   if (!student) return { found: false, already_submitted: false, cycle };
 
   // Avoid ensure/create here to keep verify path fast; missing Submitted means no prior submissions.

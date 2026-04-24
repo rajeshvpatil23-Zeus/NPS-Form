@@ -4,13 +4,13 @@ import { z } from "zod";
 import { verifyStudentSubmissionState } from "@/lib/sheets";
 
 const schema = z.object({
-  email: z.string().email()
+  identifier: z.string().trim().min(1)
 });
 
 export async function POST(req: Request) {
   try {
     const body = schema.parse(await req.json());
-    const result = await verifyStudentSubmissionState(body.email);
+    const result = await verifyStudentSubmissionState(body.identifier);
 
     if (!result.found) {
       return NextResponse.json(
@@ -18,7 +18,7 @@ export async function POST(req: Request) {
           found: false,
           already_submitted: false,
           message:
-            "This email is not registered. Please use your registered email ID."
+            "This email, student code, or phone number is not registered. Please use a registered identifier."
         },
         { status: 404 }
       );
