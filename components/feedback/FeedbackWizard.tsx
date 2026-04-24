@@ -166,8 +166,7 @@ export function FeedbackWizard({
     base.push({
       key: "grid",
       section: "Rate Your Experience Across Key Areas ✨",
-      question: "Rate the Following Components of Your Experience 😊",
-      subtext: "5 = Extremely Happy 😍 || 1 = Unhappy 😕"
+      question: "Rate the Following Components of Your Experience 😊"
     });
 
     if (path === "happy") {

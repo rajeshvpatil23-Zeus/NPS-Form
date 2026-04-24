@@ -15,6 +15,14 @@ function getScoreTone(score: number) {
   return "border-rose-500 text-rose-700";
 }
 
+function getSelectedTone(score: number) {
+  if (score >= 9) return "bg-emerald-600 border-emerald-700 text-white";
+  if (score >= 7) return "bg-lime-600 border-lime-700 text-white";
+  if (score >= 5) return "bg-amber-500 border-amber-600 text-white";
+  if (score >= 3) return "bg-orange-500 border-orange-600 text-white";
+  return "bg-rose-500 border-rose-600 text-white";
+}
+
 export function NpsStep({
   value,
   onChange
@@ -40,9 +48,9 @@ export function NpsStep({
               onClick={() => onChange(score)}
               className={cn(
                 "flex h-6 w-6 items-center justify-center rounded-full border-2 text-center text-[11px] font-semibold shadow-sm transition-all sm:h-10 sm:w-10 sm:text-sm",
-                getScoreTone(score),
+                !selected && getScoreTone(score),
                 selected
-                  ? "bg-current/10 ring-2 ring-offset-1 ring-slate-300"
+                  ? `${getSelectedTone(score)} scale-105 font-bold ring-2 ring-offset-1 ring-slate-300 shadow-md`
                   : "bg-white hover:bg-slate-50"
               )}
             >
@@ -53,7 +61,7 @@ export function NpsStep({
       </div>
       <div className="flex justify-between px-1 text-xs font-medium text-slate-500">
         <span>Extremely likely</span>
-        <span>Not likely</span>
+        <span>Less likely</span>
       </div>
     </div>
   );
