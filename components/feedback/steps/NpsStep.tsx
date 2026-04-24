@@ -33,7 +33,7 @@ export function NpsStep({
   return (
     <div className="space-y-4">
       <div className="rounded-xl border border-blue-100 bg-gradient-to-r from-blue-50 to-indigo-50 px-3 py-2 text-sm font-medium text-slate-700">
-        10 = Extremely likely · 0 = Not at all
+        10 = Extremely likely · 0 = Less likely
       </div>
       <div className="grid grid-cols-11 gap-1">
         {SCALE.map((score) => {
