@@ -2,7 +2,6 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
-import Image from "next/image";
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowLeft, ArrowRight, Loader2, Sparkles } from "lucide-react";
 
@@ -154,8 +153,7 @@ export function FeedbackWizard({
     const base: StepDef[] = [
       {
         key: "nps",
-        question:
-          "How likely are you to recommend BITSoM CEPD x Masai School Programs to your friends or family?"
+        question: "How likely are you to recommend this program to your friends or family?"
       }
     ];
 
@@ -375,8 +373,14 @@ export function FeedbackWizard({
       }}
     >
       <div className="flex flex-col gap-1">
-        <div className="w-fit">
-          <Image src="/masai-logo.svg" alt="Masai" width={110} height={33} />
+        <div className="w-fit flex h-10 items-center">
+          <img
+            src="/masai-logo-final.png"
+            alt="Masai"
+            width={92}
+            height={30}
+            className="h-auto w-[92px]"
+          />
         </div>
         <div className="inline-flex w-fit items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
           <Sparkles className="h-3.5 w-3.5" />

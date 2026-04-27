@@ -19,9 +19,9 @@ function getToneClass(value: number) {
 }
 
 function getSelectedBg(value: number) {
-  if (value === 5) return "bg-emerald-100 border-emerald-600 text-emerald-800";
-  if (value === 4 || value === 3) return "bg-orange-100 border-orange-500 text-orange-800";
-  return "bg-rose-100 border-rose-400 text-rose-800";
+  if (value === 5) return "bg-emerald-200 border-emerald-700 text-emerald-900";
+  if (value === 4 || value === 3) return "bg-orange-200 border-orange-600 text-orange-900";
+  return "bg-rose-200 border-rose-500 text-rose-900";
 }
 
 const ROWS = [
@@ -69,7 +69,7 @@ export function GridRatingStep({
                         "flex min-h-12 w-full flex-col items-center justify-center rounded-xl border text-xs font-semibold transition-all",
                         getToneClass(c.value),
                         isSelected
-                          ? `${getSelectedBg(c.value)} ring-2 ring-slate-300 shadow-sm`
+                          ? `${getSelectedBg(c.value)} font-bold ring-2 ring-offset-1 ring-slate-300 shadow-md`
                           : "bg-white/80 hover:bg-white"
                       )}
                       aria-label={`${row} rating ${c.value}`}
@@ -85,7 +85,7 @@ export function GridRatingStep({
       </div>
 
       <div className="hidden overflow-hidden rounded-2xl border border-slate-200 sm:block">
-        <div className="grid grid-cols-[1fr_repeat(5,48px)] items-center gap-0 border-b border-slate-200 bg-slate-50 px-3 py-2 text-xs font-medium text-slate-600">
+        <div className="grid grid-cols-[1fr_repeat(5,52px)] items-center gap-x-2 border-b border-slate-200 bg-slate-50 px-3 py-2 text-xs font-medium text-slate-600">
           <div>Component</div>
           {COLUMNS.map((c) => (
             <div key={c.value} className="text-center">
@@ -100,7 +100,7 @@ export function GridRatingStep({
             return (
               <div
                 key={row}
-                className="grid grid-cols-[1fr_repeat(5,48px)] items-center gap-0 px-3 py-3"
+                className="grid grid-cols-[1fr_repeat(5,52px)] items-center gap-x-2 px-3 py-3"
               >
                 <div className="pr-2 text-sm font-medium text-slate-900">
                   {row}
@@ -113,10 +113,10 @@ export function GridRatingStep({
                       type="button"
                       onClick={() => onChange({ ...value, [row]: c.value })}
                       className={cn(
-                        "mx-auto flex h-12 w-12 items-center justify-center rounded-xl border text-sm transition-colors",
+                        "mx-auto flex h-11 w-11 items-center justify-center rounded-xl border text-sm transition-colors",
                         getToneClass(c.value),
                         isSelected
-                          ? `${getSelectedBg(c.value)} shadow-sm`
+                          ? `${getSelectedBg(c.value)} font-bold ring-2 ring-offset-1 ring-slate-300 shadow-md`
                           : "bg-white/80 hover:bg-white"
                       )}
                       aria-label={`${row} rating ${c.value}`}
