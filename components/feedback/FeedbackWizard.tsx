@@ -164,7 +164,8 @@ export function FeedbackWizard({
     base.push({
       key: "grid",
       section: "Rate Your Experience Across Key Areas ✨",
-      question: "Rate the Following Components of Your Experience 😊"
+      question:
+        "Please rate the following components of your learning journey based on your experience so far."
     });
 
     if (path === "happy") {
@@ -329,7 +330,7 @@ export function FeedbackWizard({
 
       savingToast.dismiss?.();
       router.replace(
-        `/success?name=${encodeURIComponent(data.name)}&month=${encodeURIComponent(data.cycle)}&nps=${encodeURIComponent(String(npsScore))}`
+        `/success?name=${encodeURIComponent(data.name)}&month=${encodeURIComponent(data.cycle)}`
       );
     } catch (err) {
       savingToast.dismiss?.();

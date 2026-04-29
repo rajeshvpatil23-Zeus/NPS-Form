@@ -3,11 +3,8 @@ import { SuccessScreen } from "@/components/feedback/SuccessScreen";
 export default function SuccessPage({
   searchParams
 }: {
-  searchParams?: { name?: string; month?: string; nps?: string };
+  searchParams?: { name?: string; month?: string };
 }) {
-  const nps = Number(searchParams?.nps ?? "");
-  const showConfetti = Number.isFinite(nps) && nps >= 8;
-
   return (
     <main className="relative flex min-h-dvh items-center justify-center overflow-hidden px-4 py-10">
       <div className="pointer-events-none absolute -left-14 top-10 h-60 w-60 rounded-full bg-blue-200/25 blur-3xl" />
@@ -15,7 +12,6 @@ export default function SuccessPage({
       <SuccessScreen
         name={searchParams?.name ?? "there"}
         month={searchParams?.month ?? ""}
-        showConfetti={showConfetti}
       />
     </main>
   );

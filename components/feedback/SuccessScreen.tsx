@@ -1,7 +1,5 @@
 "use client";
 
-import * as React from "react";
-import confetti from "canvas-confetti";
 import { motion } from "framer-motion";
 import { Check } from "lucide-react";
 
@@ -9,28 +7,11 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 
 export function SuccessScreen({
   name,
-  month,
-  showConfetti
+  month
 }: {
   name: string;
   month: string;
-  showConfetti: boolean;
 }) {
-  React.useEffect(() => {
-    if (!showConfetti) return;
-    const end = Date.now() + 900;
-    const tick = () => {
-      confetti({
-        particleCount: 60,
-        spread: 80,
-        startVelocity: 35,
-        origin: { y: 0.7 }
-      });
-      if (Date.now() < end) requestAnimationFrame(tick);
-    };
-    tick();
-  }, [showConfetti]);
-
   return (
     <div className="relative z-10 mx-auto flex w-full max-w-md flex-col items-center justify-center gap-6">
       <Card className="w-full border-slate-200/80 bg-white/90">
