@@ -30,7 +30,7 @@ export function EmailGate({
   demoMode?: boolean;
 }) {
   const router = useRouter();
-  const [identifier, setIdentifier] = React.useState("");
+  const [email, setEmail] = React.useState("");
   const [loading, setLoading] = React.useState(false);
   const [inlineMessage, setInlineMessage] = React.useState<string | null>(
     message ?? null
@@ -47,7 +47,7 @@ export function EmailGate({
     try {
       if (demoMode) {
         router.push(
-          `/feedback?demo=1&email=${encodeURIComponent(identifier.trim().toLowerCase())}&batch=${encodeURIComponent(
+          `/feedback?demo=1&email=${encodeURIComponent(email.trim().toLowerCase())}&batch=${encodeURIComponent(
             "Demo Batch"
           )}`
         );
@@ -57,19 +57,19 @@ export function EmailGate({
       const res = await fetch("/api/verify-email", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ identifier })
+        body: JSON.stringify({ email })
       });
       const data = (await res.json()) as VerifyResponse | { error: string };
       if (!res.ok || "error" in data) {
         setIsError(true);
         setInlineMessage(
-          "This email, student code, or phone number is not registered. Please use a registered identifier."
+          "This email is not registered. Please use your registered email ID."
         );
         return;
       }
 
       if (data.already_submitted) {
-        const safeEmail = (data.email ?? identifier).trim().toLowerCase();
+        const safeEmail = (data.email ?? email).trim().toLowerCase();
         setInlineMessage(
           `You have already submitted feedback for ${data.cycle}. Thank you!`
         );
@@ -78,7 +78,7 @@ export function EmailGate({
       }
 
       router.push(
-        `/feedback?email=${encodeURIComponent(data.email ?? identifier.trim().toLowerCase())}&cycle=${encodeURIComponent(
+        `/feedback?email=${encodeURIComponent(data.email ?? email.trim().toLowerCase())}&cycle=${encodeURIComponent(
           data.cycle ?? ""
         )}&name=${encodeURIComponent(data.name ?? "")}&batch=${encodeURIComponent(
           data.batch_name ?? ""
@@ -89,7 +89,7 @@ export function EmailGate({
     } catch {
       setIsError(true);
       setInlineMessage(
-        "Could not verify your details right now. Please try again."
+        "Could not verify your email right now. Please try again."
       );
     } finally {
       setLoading(false);
@@ -150,16 +150,14 @@ export function EmailGate({
 
           <form onSubmit={onSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="identifier">
-                Enter registered email, student code, or phone number
-              </Label>
+              <Label htmlFor="email">Enter your registered email address</Label>
               <Input
-                id="identifier"
-                inputMode="text"
-                autoComplete="off"
-                placeholder="you@example.com / STU123 / 9876543210"
-                value={identifier}
-                onChange={(e) => setIdentifier(e.target.value)}
+                id="email"
+                inputMode="email"
+                autoComplete="email"
+                placeholder="you@example.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 disabled={loading}
                 required
               />
@@ -168,7 +166,7 @@ export function EmailGate({
             <Button
               type="submit"
               className="w-full font-semibold"
-              disabled={loading || identifier.trim().length === 0}
+              disabled={loading || email.trim().length === 0}
             >
               {loading ? (
                 <>
