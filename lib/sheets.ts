@@ -39,6 +39,13 @@ const STUDENTS_TAB = "Students";
 const SUBMITTED_TAB = "Submitted";
 const ALL_RESPONSES_TAB = "All Responces";
 const SHEETS_SCOPE = "https://www.googleapis.com/auth/spreadsheets";
+const DEMO_STUDENT: StudentRow = {
+  email: "demo.student@example.com",
+  student_code: "DEMO-001",
+  batch_name: "Demo Batch",
+  phone_number: "9999999999",
+  name: "Demo Student"
+};
 const SUBMITTED_HEADERS = [
   "email",
   "batch_name",
@@ -119,6 +126,10 @@ function getSheetsClient() {
 
 function normalizeEmail(email: string) {
   return email.trim().toLowerCase();
+}
+
+function getDemoStudentByEmail(email: string): StudentRow | null {
+  return normalizeEmail(email) === DEMO_STUDENT.email ? DEMO_STUDENT : null;
 }
 
 function sleep(ms: number) {
@@ -359,6 +370,8 @@ async function warmVerifyCachesFromBatchGet() {
 export async function getStudentByEmail(email: string) {
   const targetEmail = normalizeEmail(email);
   if (!targetEmail) return null;
+  const demoStudent = getDemoStudentByEmail(targetEmail);
+  if (demoStudent) return demoStudent;
 
   const { indexByHeader } = await getHeaderMap(STUDENTS_TAB);
 
@@ -506,6 +519,15 @@ export async function verifyStudentSubmissionState(
   const cycle = getCurrentCycle();
   const targetEmail = normalizeEmail(email);
   if (!targetEmail) return { found: false, already_submitted: false, cycle };
+  const demoStudent = getDemoStudentByEmail(targetEmail);
+  if (demoStudent) {
+    return {
+      found: true,
+      already_submitted: false,
+      cycle,
+      student: demoStudent
+    };
+  }
 
   // Fast path: one API call can warm both Students + Submitted caches.
   if (!isTabCacheFresh(STUDENTS_TAB) || !isTabCacheFresh(SUBMITTED_TAB)) {

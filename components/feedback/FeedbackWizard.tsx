@@ -44,7 +44,7 @@ type StudentPayload = {
 };
 
 type StepDef = {
-  key: "nps" | "grid" | "challenges" | "happy_text" | "improve" | "more";
+  key: "core" | "challenges" | "happy_text" | "improve" | "more";
   section?: string;
   question: string;
   subtext?: string;
@@ -152,21 +152,19 @@ export function FeedbackWizard({
   const steps: StepDef[] = React.useMemo(() => {
     const base: StepDef[] = [
       {
-        key: "nps",
-        question: "How likely are you to recommend this program to your friends or family?"
+        key: "core",
+        section: "Rate Your Experience Across Key Areas ✨",
+        question:
+          "Please rate the following components of your learning journey based on your experience so far.",
+        subtext:
+          "How likely are you to recommend this program to your friends or family?"
       }
     ];
 
     if (npsScore === null) return base;
+    if (!gridComplete()) return base;
 
     const path = getPath(npsScore);
-
-    base.push({
-      key: "grid",
-      section: "Rate Your Experience Across Key Areas ✨",
-      question:
-        "Please rate the following components of your learning journey based on your experience so far."
-    });
 
     if (path === "happy") {
       base.push({
@@ -228,10 +226,8 @@ export function FeedbackWizard({
 
   function stepAnswered(stepKey: string) {
     switch (stepKey) {
-      case "nps":
-        return npsScore !== null;
-      case "grid":
-        return gridComplete();
+      case "core":
+        return npsScore !== null && gridComplete();
       case "challenges":
         return challengesComplete();
       case "happy_text":
@@ -421,17 +417,21 @@ export function FeedbackWizard({
               transition={{ duration: 0.22 }}
               className="space-y-4"
             >
-              {current.key === "nps" ? (
-                <NpsStep
-                  value={npsScore}
-                  onChange={(v) => {
-                    setNpsScore(v);
-                  }}
-                />
-              ) : null}
-
-              {current.key === "grid" ? (
-                <GridRatingStep value={grid} onChange={setGrid} />
+              {current.key === "core" ? (
+                <>
+                  <GridRatingStep value={grid} onChange={setGrid} />
+                  <div className="space-y-3 border-t border-slate-100 pt-5 sm:pt-6">
+                    <div className="text-base font-semibold leading-relaxed">
+                      How likely are you to recommend this program to your friends or family?
+                    </div>
+                    <NpsStep
+                      value={npsScore}
+                      onChange={(v) => {
+                        setNpsScore(v);
+                      }}
+                    />
+                  </div>
+                </>
               ) : null}
 
               {current.key === "challenges" ? (
