@@ -21,13 +21,15 @@ function getSelectedTone(score: number) {
 
 export function NpsStep({
   value,
-  onChange
+  onChange,
+  disabled = false
 }: {
   value: number | null;
   onChange: (score: number) => void;
+  disabled?: boolean;
 }) {
   return (
-    <div className="space-y-4">
+    <div className={cn("space-y-4", disabled && "opacity-60")}>
       <div className="rounded-xl border border-blue-100 bg-gradient-to-r from-blue-50 to-indigo-50 px-3 py-2 text-sm font-medium text-slate-700">
         10 = Strongly Recommend || 1 = Not Recommend
       </div>
@@ -41,13 +43,18 @@ export function NpsStep({
               whileTap={{ scale: 0.98 }}
               animate={selected ? { scale: [1, 1.08, 1] } : { scale: 1 }}
               transition={{ duration: 0.25 }}
-              onClick={() => onChange(score)}
+              onClick={() => {
+                if (disabled) return;
+                onChange(score);
+              }}
+              disabled={disabled}
               className={cn(
                 "flex h-6 w-6 items-center justify-center rounded-full border-2 text-center text-[11px] font-semibold shadow-sm transition-all sm:h-10 sm:w-10 sm:text-sm",
                 !selected && getScoreTone(score),
                 selected
                   ? `${getSelectedTone(score)} scale-105 font-bold ring-2 ring-offset-1 ring-slate-300 shadow-md`
-                  : "bg-white hover:bg-slate-50"
+                  : "bg-white hover:bg-slate-50",
+                disabled && "cursor-not-allowed"
               )}
             >
               <span>{score}</span>

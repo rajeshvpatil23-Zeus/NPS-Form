@@ -155,9 +155,7 @@ export function FeedbackWizard({
         key: "core",
         section: "Rate Your Experience Across Key Areas ✨",
         question:
-          "Please rate the following touchpoints of your learning journey based on your experience so far.",
-        // subtext:
-        //   "Based on your learning experience and support provided, how likely are you to recommend this programs to your friends and family ?"
+          "Please rate the following touchpoints of your learning journey based on your experience so far."
       }
     ];
 
@@ -247,6 +245,7 @@ export function FeedbackWizard({
   const canGoBack = index > 0;
   const isLast = index === steps.length - 1;
   const canNext = stepAnswered(current.key);
+  const isGridComplete = gridComplete();
 
   const [submitting, setSubmitting] = React.useState(false);
 
@@ -426,6 +425,7 @@ export function FeedbackWizard({
                     </div>
                     <NpsStep
                       value={npsScore}
+                      disabled={!isGridComplete}
                       onChange={(v) => {
                         setNpsScore(v);
                       }}
