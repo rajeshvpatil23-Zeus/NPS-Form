@@ -155,9 +155,9 @@ export function FeedbackWizard({
         key: "core",
         section: "Rate Your Experience Across Key Areas ✨",
         question:
-          "Please rate the following components of your learning journey based on your experience so far.",
-        subtext:
-          "How likely are you to recommend this program to your friends or family?"
+          "Please rate the following touchpoints of your learning journey based on your experience so far.",
+        // subtext:
+        //   "Based on your learning experience and support provided, how likely are you to recommend this programs to your friends and family ?"
       }
     ];
 
@@ -422,7 +422,7 @@ export function FeedbackWizard({
                   <GridRatingStep value={grid} onChange={setGrid} />
                   <div className="space-y-3 border-t border-slate-100 pt-5 sm:pt-6">
                     <div className="text-base font-semibold leading-relaxed">
-                      How likely are you to recommend this program to your friends or family?
+                      Based on your learning experience and support provided, how likely are you to recommend this programs to your friends and family ?
                     </div>
                     <NpsStep
                       value={npsScore}

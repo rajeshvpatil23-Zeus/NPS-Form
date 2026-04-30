@@ -8,18 +8,14 @@ import { cn } from "@/lib/utils";
 const SCALE = [10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0];
 
 function getScoreTone(score: number) {
-  if (score >= 9) return "border-emerald-500 text-emerald-700";
-  if (score >= 7) return "border-lime-500 text-lime-700";
-  if (score >= 5) return "border-amber-500 text-amber-700";
-  if (score >= 3) return "border-orange-500 text-orange-700";
+  if (score === 10) return "border-emerald-500 text-emerald-700";
+  if (score === 9) return "border-orange-500 text-orange-700";
   return "border-rose-500 text-rose-700";
 }
 
 function getSelectedTone(score: number) {
-  if (score >= 9) return "bg-emerald-600 border-emerald-700 text-white";
-  if (score >= 7) return "bg-lime-600 border-lime-700 text-white";
-  if (score >= 5) return "bg-amber-500 border-amber-600 text-white";
-  if (score >= 3) return "bg-orange-500 border-orange-600 text-white";
+  if (score === 10) return "bg-emerald-600 border-emerald-700 text-white";
+  if (score === 9) return "bg-orange-500 border-orange-600 text-white";
   return "bg-rose-500 border-rose-600 text-white";
 }
 
@@ -33,7 +29,7 @@ export function NpsStep({
   return (
     <div className="space-y-4">
       <div className="rounded-xl border border-blue-100 bg-gradient-to-r from-blue-50 to-indigo-50 px-3 py-2 text-sm font-medium text-slate-700">
-        10 = Will surely recommend · 0 = Will not recommend
+        10 = Strongly Recommend || 1 = Not Recommend
       </div>
       <div className="grid grid-cols-11 gap-1">
         {SCALE.map((score) => {
@@ -60,8 +56,8 @@ export function NpsStep({
         })}
       </div>
       <div className="flex justify-between px-1 text-xs font-medium text-slate-500">
-        <span>Will surely recommend</span>
-        <span>Will not recommend</span>
+        <span>Strongly Recommend</span>
+        <span>Not Recommend</span>
       </div>
     </div>
   );
