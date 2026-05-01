@@ -169,7 +169,7 @@ export function FeedbackWizard({
         key: "happy_text",
         section: "Share Your Experience",
         question:
-          "What did you like most about your experience with BITSoM CEPD x Masai School, and what is one thing we could improve further?"
+          "What did you like most about your experience with this program, and what is one thing we could improve further?"
       });
     } else if (path === "neutral") {
       base.push({
