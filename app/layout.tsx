@@ -13,8 +13,7 @@ export function generateMetadata(): Metadata {
   const title = getMonthlyFeedbackTitle();
   return {
     title,
-    description:
-      "Monthly feedback collection for BITSoM CEPD x Masai School.",
+    description: "Monthly feedback collection for Masai School.",
     icons: []
   };
 }

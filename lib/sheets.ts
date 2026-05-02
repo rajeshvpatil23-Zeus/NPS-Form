@@ -1,5 +1,7 @@
 import { google, sheets_v4 } from "googleapis";
 
+import { getMonthYearLabel } from "@/lib/month";
+
 type StudentRow = {
   email: string;
   student_code: string;
@@ -81,7 +83,7 @@ function getCycleLabel(date = new Date()) {
 }
 
 export function getCurrentCycle() {
-  return getCycleLabel();
+  return getMonthYearLabel();
 }
 
 function spreadsheetId() {
@@ -219,11 +221,9 @@ async function ensureTabWithHeader(tabName: string, requiredHeaders: string[]) {
     })
   );
   const current = (first.data.values?.[0] ?? []).map((v) => String(v).trim());
-  const headerOk =
-    current.length >= requiredHeaders.length &&
-    requiredHeaders.every((h, i) => current[i] === h);
-
-  if (!headerOk) {
+  // Avoid rewriting an existing header row on every submit. Protected header ranges in
+  // customer sheets can reject updates and block form submissions.
+  if (!current.length) {
     await withRetry(() =>
       sheets.spreadsheets.values.update({
         spreadsheetId: ssId,
@@ -233,6 +233,17 @@ async function ensureTabWithHeader(tabName: string, requiredHeaders: string[]) {
       })
     );
     invalidateTabCache(tabName);
+    return;
+  }
+
+  const currentSet = new Set(current.map((h) => h.toLowerCase()));
+  const missingHeaders = requiredHeaders.filter(
+    (h) => !currentSet.has(h.toLowerCase())
+  );
+  if (missingHeaders.length > 0) {
+    throw new Error(
+      `Tab "${tabName}" is missing required headers: ${missingHeaders.join(", ")}`
+    );
   }
 }
 
